@@ -37,6 +37,7 @@
 
 <div class="radarChart"></div>
 
+<script src="vt-oz-tract-data.js"></script>
 <script src="radarChart.js"></script>
 <script>
 
@@ -95,13 +96,13 @@
 		w: width,
 		h: height,
 		margin: margin,
-		maxValue: 0.5,
+		maxValue: 1,
 		levels: 5,
 		roundStrokes: true,
 		color: color
 	};
 	//Call function to draw the Radar chart
-	RadarChart(".radarChart", data, radarChartOptions);
+	RadarChart(".radarChart", attrDataForVTFormattedForViz.slice(0,3), radarChartOptions);
 </script>
 </body>
 </html>
