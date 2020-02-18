@@ -136,15 +136,29 @@ function RadarChart(id, data, options) {
 	///////////// Draw the radar chart blobs ////////////////
 	/////////////////////////////////////////////////////////
 	
+	const DEMO_SELECTED_COMMUNITY = data[0][0]
+	
 	//The radial line function
 	var radarLine = d3.svg.line.radial()
 		.interpolate("linear-closed")
-		.radius(function(d) { return rScale(d.value); })
-		.angle(function(d,i) {	return i*angleSlice; });
+		.radius(100)
+		.angle((d,i) => i * angleSlice);
 	
-	if(cfg.roundStrokes) {
-		radarLine.interpolate("cardinal-closed");
-	}
+	setTimeout(() => {
+		const newLine = d3.svg.line.radial()
+			.interpolate("linear-closed")
+			.radius(d => rScale(d.value))
+			.angle((d,i) => i * angleSlice);
+
+		d3.selectAll('.radarArea, .radarStroke')
+			.transition().duration(2000)
+			.attr("d", d => newLine(d))
+
+	}, 400)
+	
+	// if(cfg.roundStrokes) {
+	// 	radarLine.interpolate("cardinal-closed");
+	// }
 	
 	//Create a wrapper for the blobs
 	var blobWrapper = g.selectAll(".radarWrapper")
