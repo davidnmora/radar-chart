@@ -138,17 +138,21 @@ function RadarChart(id, data, options) {
 	
 	const DEMO_SELECTED_COMMUNITY = data[0][0]
 	
+	const radialUtils = {
+		getRadius: d => rScale(d.value),
+		getPointXLocation: (d, i) => rScale(d.value) *  Math.cos(angleSlice * i - Math.PI/2),
+		radialPathGeneratorSansRadius: () => {
+			return d3.svg.line.radial()
+				.interpolate("linear-closed")
+				.angle((d,i) => i * angleSlice)
+			// just add .radius()!
+		}
+	}
 	//The radial line function
-	var radarLine = d3.svg.line.radial()
-		.interpolate("linear-closed")
-		.radius(100)
-		.angle((d,i) => i * angleSlice);
+	const radarLinePreDataDefinedRadius = radialUtils.radialPathGeneratorSansRadius().radius(100)
 	
 	setTimeout(() => {
-		const newLine = d3.svg.line.radial()
-			.interpolate("linear-closed")
-			.radius(d => rScale(d.value))
-			.angle((d,i) => i * angleSlice);
+		const newLine = radialUtils.radialPathGeneratorSansRadius().radius(radialUtils.getRadius)
 
 		d3.selectAll('.radarArea, .radarStroke')
 			.transition().duration(2000)
@@ -157,7 +161,7 @@ function RadarChart(id, data, options) {
 	}, 400)
 	
 	// if(cfg.roundStrokes) {
-	// 	radarLine.interpolate("cardinal-closed");
+	// 	radarLinePreDataDefinedRadius.interpolate("cardinal-closed");
 	// }
 	
 	//Create a wrapper for the blobs
@@ -170,7 +174,7 @@ function RadarChart(id, data, options) {
 	blobWrapper
 		.append("path")
 		.attr("class", "radarArea")
-		.attr("d", function(d,i) { return radarLine(d); })
+		.attr("d", function(d,i) { return radarLinePreDataDefinedRadius(d); })
 		.style("fill", function(d,i) { return cfg.color(i); })
 		.style("fill-opacity", cfg.opacityArea)
 		.on('mouseover', function (d,i){
@@ -193,7 +197,7 @@ function RadarChart(id, data, options) {
 	//Create the outlines
 	blobWrapper.append("path")
 		.attr("class", "radarStroke")
-		.attr("d", function(d,i) { return radarLine(d); })
+		.attr("d", function(d,i) { return radarLinePreDataDefinedRadius(d); })
 		.style("stroke-width", cfg.strokeWidth + "px")
 		.style("stroke", function(d,i) { return cfg.color(i); })
 		.style("fill", "none")
@@ -205,7 +209,7 @@ function RadarChart(id, data, options) {
 		.enter().append("circle")
 		.attr("class", "radarCircle")
 		.attr("r", cfg.dotRadius)
-		.attr("cx", function(d,i){ return rScale(d.value) * Math.cos(angleSlice*i - Math.PI/2); })
+		.attr("cx", radialUtils.getPointXLocation)
 		.attr("cy", function(d,i){ return rScale(d.value) * Math.sin(angleSlice*i - Math.PI/2); })
 		.style("fill", function(d,i,j) { return cfg.color(j); })
 		.style("fill-opacity", 0.8);
