@@ -130,7 +130,7 @@ function RadarChart(id, data, options) {
 		.attr("x", function(d, i){ return rScale(maxValue * cfg.labelFactor) * Math.cos(angleSlice*i - Math.PI/2); })
 		.attr("y", function(d, i){ return rScale(maxValue * cfg.labelFactor) * Math.sin(angleSlice*i - Math.PI/2); })
 		.text(function(d){return d})
-		.call(wrap, cfg.wrapWidth);
+		.call(utils.wrap, cfg.wrapWidth);
 	
 	/////////////////////////////////////////////////////////
 	///////////// Draw the radar chart blobs ////////////////
@@ -197,20 +197,20 @@ function RadarChart(id, data, options) {
 		.style("fill-opacity", 0.8);
 	
 	/////////////////////////////////////////////////////////
-	//////// Append invisible circles for tooltip ///////////
+	//////// Append circles for tooltip at vertex ///////////
 	/////////////////////////////////////////////////////////
 	
-	//Wrapper for the invisible circles on top
+	//Wrapper for the circles on top
 	var blobCircleWrapper = g.selectAll(".radarCircleWrapper")
 		.data(data)
 		.enter().append("g")
 		.attr("class", "radarCircleWrapper");
 	
-	//Append a set of invisible circles on top for the mouseover pop-up
-	blobCircleWrapper.selectAll(".radarInvisibleCircle")
+	//Append a set of circles on top for the mouseover pop-up
+	blobCircleWrapper.selectAll(".radarBlobVertexCircle")
 		.data(function(d,i) { return d; })
 		.enter().append("circle")
-		.attr("class", "radarInvisibleCircle")
+		.attr("class", "radarBlobVertexCircle")
 		.attr("r", cfg.dotRadius*1.5)
 		.attr("cx", function(d,i){ return rScale(d.value) * Math.cos(angleSlice*i - Math.PI/2); })
 		.attr("cy", function(d,i){ return rScale(d.value) * Math.sin(angleSlice*i - Math.PI/2); })
@@ -235,38 +235,7 @@ function RadarChart(id, data, options) {
 	//Set up the small tooltip for when you hover over a circle
 	var tooltip = g.append("text")
 		.attr("class", "tooltip")
-		.style("opacity", 0);
-	
-	/////////////////////////////////////////////////////////
-	/////////////////// Helper Function /////////////////////
-	/////////////////////////////////////////////////////////
-	
-	//Taken from http://bl.ocks.org/mbostock/7555321
-	//Wraps SVG text
-	function wrap(text, width) {
-		text.each(function() {
-			var text = d3.select(this),
-				words = text.text().split(/\s+/).reverse(),
-				word,
-				line = [],
-				lineNumber = 0,
-				lineHeight = 1.4, // ems
-				y = text.attr("y"),
-				x = text.attr("x"),
-				dy = parseFloat(text.attr("dy")),
-				tspan = text.text(null).append("tspan").attr("x", x).attr("y", y).attr("dy", dy + "em");
-			
-			while (word = words.pop()) {
-				line.push(word);
-				tspan.text(line.join(" "));
-				if (tspan.node().getComputedTextLength() > width) {
-					line.pop();
-					tspan.text(line.join(" "));
-					line = [word];
-					tspan = text.append("tspan").attr("x", x).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
-				}
-			}
-		});
-	}//wrap
+		.style("opacity", 0)
+		.style("font-size", 24)
 	
 }//RadarChart
