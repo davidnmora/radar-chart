@@ -79,17 +79,6 @@ function RadarChart(id, data, options) {
 		.attr("transform", "translate(" + (radialUtils.config.w/2 + radialUtils.config.margin.left) + "," + (radialUtils.config.h/2 + radialUtils.config.margin.top) + ")");
 	
 	/////////////////////////////////////////////////////////
-	////////// Glow filter for some extra pizzazz ///////////
-	/////////////////////////////////////////////////////////
-	
-	//Filter for the outside glow
-	var filter = g.append('defs').append('filter').attr('id','glow'),
-		feGaussianBlur = filter.append('feGaussianBlur').attr('stdDeviation','2.5').attr('result','coloredBlur'),
-		feMerge = filter.append('feMerge'),
-		feMergeNode_1 = feMerge.append('feMergeNode').attr('in','coloredBlur'),
-		feMergeNode_2 = feMerge.append('feMergeNode').attr('in','SourceGraphic');
-	
-	/////////////////////////////////////////////////////////
 	/////////////// Draw the Circular grid //////////////////
 	/////////////////////////////////////////////////////////
 	
@@ -106,7 +95,6 @@ function RadarChart(id, data, options) {
 		.style("fill", "#CDCDCD")
 		.style("stroke", "none") // #CDCDCD
 		.style("fill-opacity", radialUtils.config.opacityCircles)
-		.style("filter" , "url(#glow)");
 	
 	//Text indicating at what % each level is
 	axisGrid.selectAll(".axisLabel")
@@ -192,7 +180,6 @@ function RadarChart(id, data, options) {
 		.style("stroke-width", radialUtils.config.strokeWidth + "px")
 		.style("stroke", function(d,i) { return radialUtils.config.color(i); })
 		.style("fill", "none")
-		.style("filter" , "url(#glow)");
 	
 	//Append the circles
 	blobWrapper.selectAll(".radarCircle")
