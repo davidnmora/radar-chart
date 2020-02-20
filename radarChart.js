@@ -152,22 +152,6 @@ function RadarChart(id, data, options) {
 	///////////// Draw the radar chart blobs ////////////////
 	/////////////////////////////////////////////////////////
 	
-	//The radial line function
-	const radarLinePreDataDefinedRadius = radialUtils.radialPathGeneratorSansRadius().radius(10)
-	
-	setTimeout(() => {
-		const newLine = radialUtils.radialPathGeneratorSansRadius().radius(radialUtils.getRadius)
-
-		d3.selectAll('.radarArea, .radarStroke')
-			.transition().duration(100)
-			.attr("d", d => newLine(d))
-
-	}, 400)
-	
-	// if(CONFIG_PROPERTIES.roundStrokes) {
-	// 	radarLinePreDataDefinedRadius.curve(d3.curveCardinalClosed)
-	// }
-	
 	//Create a wrapper for the blobs
 	var blobWrapper = g.selectAll(".radarWrapper")
 		.data(data)
@@ -178,7 +162,7 @@ function RadarChart(id, data, options) {
 	blobWrapper
 		.append("path")
 		.attr("class", "radarArea")
-		.attr("d", function(d,i) { return radarLinePreDataDefinedRadius(d); })
+		.attr("d", radialUtils.radialPathGeneratorSansRadius().radius(radialUtils.getRadius))
 		.style("fill", function(d,i) { return CONFIG_PROPERTIES.color(i); })
 		.style("fill-opacity", CONFIG_PROPERTIES.opacityArea)
 		.on('mouseover', function (d,i){
@@ -201,7 +185,7 @@ function RadarChart(id, data, options) {
 	//Create the outlines
 	blobWrapper.append("path")
 		.attr("class", "radarStroke")
-		.attr("d", function(d,i) { return radarLinePreDataDefinedRadius(d); })
+		.attr("d", radialUtils.radialPathGeneratorSansRadius().radius(radialUtils.getRadius))
 		.style("stroke-width", CONFIG_PROPERTIES.strokeWidth + "px")
 		.style("stroke", function(d,i) { return CONFIG_PROPERTIES.color(i); })
 		.style("fill", "none")
