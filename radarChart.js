@@ -37,7 +37,6 @@ function RadarChart(id, data, options) {
 	var maxValue = Math.max(CONFIG_PROPERTIES.maxValue, d3.max(data, function(i){return d3.max(i.map(function(o){return o.value;}))}));
 	
 	var	total = data[0].length,					//The number of different axes
-		Format = d3.format('%'),			 	//Percentage formatting
 		angleSlice = Math.PI * 2 / total;		//The width in radians of each "slice"
 	
 	//Scale for the radius
@@ -114,7 +113,7 @@ function RadarChart(id, data, options) {
 		.attr("dy", "0.4em")
 		.style("font-size", "10px")
 		.attr("fill", "#737373")
-		.text(function(d,i) { return Format(maxValue * d/CONFIG_PROPERTIES.levels); });
+		.text(d => maxValue * d / CONFIG_PROPERTIES.levels);
 	
 	/////////////////////////////////////////////////////////
 	//////////////////// Draw the axes //////////////////////
@@ -233,8 +232,8 @@ function RadarChart(id, data, options) {
 		.enter().append("circle")
 		.attr("class", "radarBlobVertexCircle")
 		.attr("r", CONFIG_PROPERTIES.dotRadius*1.5)
-		.attr("cx", radialUtils.xLocationFn)
-		.attr("cy", radialUtils.yLocationFn)
+		.attr("cx", radialUtils.xLocationFn(CONFIG_PROPERTIES.maxValue))
+		.attr("cy", radialUtils.yLocationFn(CONFIG_PROPERTIES.maxValue))
 		.style("fill", "none")
 		.style("pointer-events", "all")
 		.on("mouseover", function(d,i) {
@@ -244,7 +243,7 @@ function RadarChart(id, data, options) {
 			tooltip
 				.attr('x', newX)
 				.attr('y', newY)
-				.text(Format(d.value))
+				.text(d.value)
 				.transition().duration(200)
 				.style('opacity', 1);
 		})
