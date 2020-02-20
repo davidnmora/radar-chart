@@ -5,36 +5,36 @@
 /////////// Inspired by the code of alangrafu ///////////
 /////////////////////////////////////////////////////////
 
+// todo: probably a better way than mutating this (ie set a class prop)
+let CONFIG_PROPERTIES = {
+	w: 600,				//Width of the circle
+	h: 600,				//Height of the circle
+	margin: {top: 20, right: 20, bottom: 20, left: 20}, //The margins of the SVG
+	levels: 3,				//How many levels or inner circles should there be drawn
+	maxValue: 0, 			//What is the value that the biggest circle will represent
+	labelFactor: 1.25, 	//How much farther than the radius of the outer circle should the labels be placed
+	wrapWidth: 60, 		//The number of pixels after which a label needs to be given a new line
+	opacityArea: 0.35, 	//The opacity of the area of the blob
+	dotRadius: 4, 			//The size of the colored circles of each blog
+	opacityCircles: 0.1, 	//The opacity of the circles of each blob
+	strokeWidth: 2, 		//The width of the stroke around each blob
+	roundStrokes: false,	//If true the area and stroke will follow a round path (cardinal-closed)
+	// color: REQUIRED	//Color function
+};
+
 function RadarChart(id, data, options) {
-	var cfg = {
-		w: 600,				//Width of the circle
-		h: 600,				//Height of the circle
-		margin: {top: 20, right: 20, bottom: 20, left: 20}, //The margins of the SVG
-		levels: 3,				//How many levels or inner circles should there be drawn
-		maxValue: 0, 			//What is the value that the biggest circle will represent
-		labelFactor: 1.25, 	//How much farther than the radius of the outer circle should the labels be placed
-		wrapWidth: 60, 		//The number of pixels after which a label needs to be given a new line
-		opacityArea: 0.35, 	//The opacity of the area of the blob
-		dotRadius: 4, 			//The size of the colored circles of each blog
-		opacityCircles: 0.1, 	//The opacity of the circles of each blob
-		strokeWidth: 2, 		//The width of the stroke around each blob
-		roundStrokes: false,	//If true the area and stroke will follow a round path (cardinal-closed)
-		// color: REQUIRED	//Color function
-	};
 	
-	//Put all of the options into a variable called cfg
-	if('undefined' !== typeof options){
-		for(var i in options){
-			if('undefined' !== typeof options[i]){ cfg[i] = options[i]; }
-		}//for i
-	}//if
+	CONFIG_PROPERTIES = {
+		...CONFIG_PROPERTIES,
+		...options
+	}
 	
 	//If the supplied maxValue is smaller than the actual one, replace by the max in the data
-	var maxValue = Math.max(cfg.maxValue, d3.max(data, function(i){return d3.max(i.map(function(o){return o.value;}))}));
+	var maxValue = Math.max(CONFIG_PROPERTIES.maxValue, d3.max(data, function(i){return d3.max(i.map(function(o){return o.value;}))}));
 	
 	var allAxis = (data[0].map(function(i, j){return i.axis})),	//Names of each axis
 		total = allAxis.length,					//The number of different axes
-		radius = Math.min(cfg.w/2, cfg.h/2), 	//Radius of the outermost circle
+		radius = Math.min(CONFIG_PROPERTIES.w/2, CONFIG_PROPERTIES.h/2), 	//Radius of the outermost circle
 		Format = d3.format('%'),			 	//Percentage formatting
 		angleSlice = Math.PI * 2 / total;		//The width in radians of each "slice"
 	
@@ -65,12 +65,12 @@ function RadarChart(id, data, options) {
 	
 	//Initiate the radar chart SVG
 	var svg = d3.select(id).append("svg")
-		.attr("width",  cfg.w + cfg.margin.left + cfg.margin.right)
-		.attr("height", cfg.h + cfg.margin.top + cfg.margin.bottom)
+		.attr("width",  CONFIG_PROPERTIES.w + CONFIG_PROPERTIES.margin.left + CONFIG_PROPERTIES.margin.right)
+		.attr("height", CONFIG_PROPERTIES.h + CONFIG_PROPERTIES.margin.top + CONFIG_PROPERTIES.margin.bottom)
 		.attr("class", "radar"+id);
 	//Append a g element
 	var g = svg.append("g")
-		.attr("transform", "translate(" + (cfg.w/2 + cfg.margin.left) + "," + (cfg.h/2 + cfg.margin.top) + ")");
+		.attr("transform", "translate(" + (CONFIG_PROPERTIES.w/2 + CONFIG_PROPERTIES.margin.left) + "," + (CONFIG_PROPERTIES.h/2 + CONFIG_PROPERTIES.margin.top) + ")");
 	
 	/////////////////////////////////////////////////////////
 	////////// Glow filter for some extra pizzazz ///////////
@@ -92,27 +92,27 @@ function RadarChart(id, data, options) {
 	
 	//Draw the background circles
 	axisGrid.selectAll(".levels")
-		.data(d3.range(1,(cfg.levels+1)).reverse())
+		.data(d3.range(1,(CONFIG_PROPERTIES.levels+1)).reverse())
 		.enter()
 		.append("circle")
 		.attr("class", "gridCircle")
-		.attr("r", function(d, i){return radius/cfg.levels*d;})
+		.attr("r", function(d, i){return radius/CONFIG_PROPERTIES.levels*d;})
 		.style("fill", "#CDCDCD")
 		.style("stroke", "none") // #CDCDCD
-		.style("fill-opacity", cfg.opacityCircles)
+		.style("fill-opacity", CONFIG_PROPERTIES.opacityCircles)
 		.style("filter" , "url(#glow)");
 	
 	//Text indicating at what % each level is
 	axisGrid.selectAll(".axisLabel")
-		.data(d3.range(1,(cfg.levels+1)).reverse())
+		.data(d3.range(1,(CONFIG_PROPERTIES.levels+1)).reverse())
 		.enter().append("text")
 		.attr("class", "axisLabel")
 		.attr("x", 4)
-		.attr("y", function(d){return -d*radius/cfg.levels;})
+		.attr("y", function(d){return -d*radius/CONFIG_PROPERTIES.levels;})
 		.attr("dy", "0.4em")
 		.style("font-size", "10px")
 		.attr("fill", "#737373")
-		.text(function(d,i) { return Format(maxValue * d/cfg.levels); });
+		.text(function(d,i) { return Format(maxValue * d/CONFIG_PROPERTIES.levels); });
 	
 	/////////////////////////////////////////////////////////
 	//////////////////// Draw the axes //////////////////////
@@ -140,10 +140,10 @@ function RadarChart(id, data, options) {
 		.style("font-size", "11px")
 		.attr("text-anchor", "middle")
 		.attr("dy", "0.35em")
-		.attr("x", radialUtils.xLocationFn(maxValue * cfg.labelFactor, true))
-		.attr("y", radialUtils.yLocationFn(maxValue * cfg.labelFactor, true))
+		.attr("x", radialUtils.xLocationFn(maxValue * CONFIG_PROPERTIES.labelFactor, true))
+		.attr("y", radialUtils.yLocationFn(maxValue * CONFIG_PROPERTIES.labelFactor, true))
 		.text(function(d){return d})
-		.call(utils.wrap, cfg.wrapWidth);
+		.call(utils.wrap, CONFIG_PROPERTIES.wrapWidth);
 	
 	/////////////////////////////////////////////////////////
 	///////////// Draw the radar chart blobs ////////////////
@@ -161,7 +161,7 @@ function RadarChart(id, data, options) {
 
 	}, 400)
 	
-	// if(cfg.roundStrokes) {
+	// if(CONFIG_PROPERTIES.roundStrokes) {
 	// 	radarLinePreDataDefinedRadius.curve(d3.curveCardinalClosed)
 	// }
 	
@@ -176,8 +176,8 @@ function RadarChart(id, data, options) {
 		.append("path")
 		.attr("class", "radarArea")
 		.attr("d", function(d,i) { return radarLinePreDataDefinedRadius(d); })
-		.style("fill", function(d,i) { return cfg.color(i); })
-		.style("fill-opacity", cfg.opacityArea)
+		.style("fill", function(d,i) { return CONFIG_PROPERTIES.color(i); })
+		.style("fill-opacity", CONFIG_PROPERTIES.opacityArea)
 		.on('mouseover', function (d,i){
 			//Dim all blobs
 			d3.selectAll(".radarArea")
@@ -192,15 +192,15 @@ function RadarChart(id, data, options) {
 			//Bring back all blobs
 			d3.selectAll(".radarArea")
 				.transition().duration(200)
-				.style("fill-opacity", cfg.opacityArea);
+				.style("fill-opacity", CONFIG_PROPERTIES.opacityArea);
 		});
 	
 	//Create the outlines
 	blobWrapper.append("path")
 		.attr("class", "radarStroke")
 		.attr("d", function(d,i) { return radarLinePreDataDefinedRadius(d); })
-		.style("stroke-width", cfg.strokeWidth + "px")
-		.style("stroke", function(d,i) { return cfg.color(i); })
+		.style("stroke-width", CONFIG_PROPERTIES.strokeWidth + "px")
+		.style("stroke", function(d,i) { return CONFIG_PROPERTIES.color(i); })
 		.style("fill", "none")
 		.style("filter" , "url(#glow)");
 	
@@ -209,10 +209,10 @@ function RadarChart(id, data, options) {
 		.data(function(d,i) { return d; })
 		.enter().append("circle")
 		.attr("class", "radarCircle")
-		.attr("r", cfg.dotRadius)
+		.attr("r", CONFIG_PROPERTIES.dotRadius)
 		.attr("cx", radialUtils.xLocationFn())
 		.attr("cy", radialUtils.yLocationFn())
-		.style("fill", function(d,i,j) { return cfg.color(j); })
+		.style("fill", function(d,i,j) { return CONFIG_PROPERTIES.color(j); })
 		.style("fill-opacity", 0.8);
 	
 	/////////////////////////////////////////////////////////
@@ -230,7 +230,7 @@ function RadarChart(id, data, options) {
 		.data(function(d,i) { return d; })
 		.enter().append("circle")
 		.attr("class", "radarBlobVertexCircle")
-		.attr("r", cfg.dotRadius*1.5)
+		.attr("r", CONFIG_PROPERTIES.dotRadius*1.5)
 		.attr("cx", radialUtils.xLocationFn)
 		.attr("cy", radialUtils.yLocationFn)
 		.style("fill", "none")
