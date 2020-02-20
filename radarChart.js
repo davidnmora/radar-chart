@@ -5,10 +5,9 @@
 /////////// Inspired by the code of alangrafu ///////////
 /////////////////////////////////////////////////////////
 
-// todo: probably a better way than mutating this (ie set a class prop)
-let CONFIG_PROPERTIES = {
-	w: 600,				//Width of the circle
-	h: 600,				//Height of the circle
+const DEFAULT__CONFIG_PROPERTIES = {
+	w: 300,				//Width of the circle
+	h: 300,				//Height of the circle
 	margin: {top: 20, right: 20, bottom: 20, left: 20}, //The margins of the SVG
 	levels: 3,				//How many levels or inner circles should there be drawn
 	maxValue: 0, 			//What is the value that the biggest circle will represent
@@ -22,42 +21,46 @@ let CONFIG_PROPERTIES = {
 	// color: REQUIRED	//Color function
 };
 
-function RadialUtilsManager(CONFIG_PROPERTIES) {
-	const _radiusScale = d3.scaleLinear()
-		.range([0, CONFIG_PROPERTIES.radius])
-		.domain([0, CONFIG_PROPERTIES.maxValue]);
+class RadialUtilsManager {
 	
-	this.getRadius = d => _radiusScale(d.value),
-		this.xLocationFn = (scaleFactor = 1, dIgnored = false) => (d, i) => _radiusScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.cos(CONFIG_PROPERTIES.angleSlice * i - Math.PI/2),
-		this.yLocationFn = (scaleFactor = 1, dIgnored = false) => (d, i) => _radiusScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.sin(CONFIG_PROPERTIES.angleSlice * i - Math.PI/2),
-		this.radialPathGeneratorSansRadius = () => {
-			return d3.lineRadial()
-				.curve(d3.curveMonotoneX)
-				.angle((d,i) => i * CONFIG_PROPERTIES.angleSlice)
-			// just add .radius()!
+	constructor(data, options) {
+		this._CONFIG_PROPERTIES = {
+			...DEFAULT__CONFIG_PROPERTIES,
+			...options,
+			
+			radius: (options.w || DEFAULT__CONFIG_PROPERTIES.w) / 2, 	//Radius of the outermost circle
+			angleSlice: Math.PI * 2 / data[0].length,		//The width in radians of each "slice"
+			maxValue: Math.max(
+				options.maxValue || DEFAULT__CONFIG_PROPERTIES.maxValue,
+				d3.max(
+					data, i => d3.max(i.map(o => o.value))
+				)
+			), //If the supplied maxValue is smaller than the actual one, replace by the max in the data
 		}
+		
+		const _radiusScale = d3.scaleLinear()
+			.range([0, this._CONFIG_PROPERTIES.radius])
+			.domain([0, this._CONFIG_PROPERTIES.maxValue]);
+		
+		this.getRadius = d => _radiusScale(d.value),
+			this.xLocationFn = (scaleFactor = 1, dIgnored = false) => (d, i) => _radiusScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.cos(this._CONFIG_PROPERTIES.angleSlice * i - Math.PI/2),
+			this.yLocationFn = (scaleFactor = 1, dIgnored = false) => (d, i) => _radiusScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.sin(this._CONFIG_PROPERTIES.angleSlice * i - Math.PI/2),
+			this.radialPathGeneratorSansRadius = () => {
+				return d3.lineRadial()
+					.curve(d3.curveMonotoneX)
+					.angle((d,i) => i * this._CONFIG_PROPERTIES.angleSlice)
+				// just add .radius()!
+			}
+	}
+	
+	get config() {
+		return this._CONFIG_PROPERTIES
+	}
 }
 
 function RadarChart(id, data, options) {
 	
-	CONFIG_PROPERTIES = {
-		...CONFIG_PROPERTIES,
-		...options,
-	}
-	
-	CONFIG_PROPERTIES = {
-		...CONFIG_PROPERTIES,
-		radius: Math.min(CONFIG_PROPERTIES.w/2, CONFIG_PROPERTIES.h/2), 	//Radius of the outermost circle
-		angleSlice: Math.PI * 2 / data[0].length,		//The width in radians of each "slice"
-		maxValue: Math.max(
-			CONFIG_PROPERTIES.maxValue,
-			d3.max(
-				data, i => d3.max(i.map(o => o.value))
-			)
-		), //If the supplied maxValue is smaller than the actual one, replace by the max in the data
-	}
-	
-	const radialUtils = new RadialUtilsManager(CONFIG_PROPERTIES)
+	const radialUtils = new RadialUtilsManager(data, options)
 	
 	/////////////////////////////////////////////////////////
 	//////////// Create the container SVG and g /////////////
@@ -68,12 +71,12 @@ function RadarChart(id, data, options) {
 	
 	//Initiate the radar chart SVG
 	var svg = d3.select(id).append("svg")
-		.attr("width",  CONFIG_PROPERTIES.w + CONFIG_PROPERTIES.margin.left + CONFIG_PROPERTIES.margin.right)
-		.attr("height", CONFIG_PROPERTIES.h + CONFIG_PROPERTIES.margin.top + CONFIG_PROPERTIES.margin.bottom)
+		.attr("width",  radialUtils.config.w + radialUtils.config.margin.left + radialUtils.config.margin.right)
+		.attr("height", radialUtils.config.h + radialUtils.config.margin.top + radialUtils.config.margin.bottom)
 		.attr("class", "radar"+id);
 	//Append a g element
 	var g = svg.append("g")
-		.attr("transform", "translate(" + (CONFIG_PROPERTIES.w/2 + CONFIG_PROPERTIES.margin.left) + "," + (CONFIG_PROPERTIES.h/2 + CONFIG_PROPERTIES.margin.top) + ")");
+		.attr("transform", "translate(" + (radialUtils.config.w/2 + radialUtils.config.margin.left) + "," + (radialUtils.config.h/2 + radialUtils.config.margin.top) + ")");
 	
 	/////////////////////////////////////////////////////////
 	////////// Glow filter for some extra pizzazz ///////////
@@ -95,27 +98,27 @@ function RadarChart(id, data, options) {
 	
 	//Draw the background circles
 	axisGrid.selectAll(".levels")
-		.data(d3.range(1,(CONFIG_PROPERTIES.levels+1)).reverse())
+		.data(d3.range(1,(radialUtils.config.levels+1)).reverse())
 		.enter()
 		.append("circle")
 		.attr("class", "gridCircle")
-		.attr("r", function(d, i){return CONFIG_PROPERTIES.radius/CONFIG_PROPERTIES.levels*d;})
+		.attr("r", function(d, i){return radialUtils.config.radius/radialUtils.config.levels*d;})
 		.style("fill", "#CDCDCD")
 		.style("stroke", "none") // #CDCDCD
-		.style("fill-opacity", CONFIG_PROPERTIES.opacityCircles)
+		.style("fill-opacity", radialUtils.config.opacityCircles)
 		.style("filter" , "url(#glow)");
 	
 	//Text indicating at what % each level is
 	axisGrid.selectAll(".axisLabel")
-		.data(d3.range(1,(CONFIG_PROPERTIES.levels+1)).reverse())
+		.data(d3.range(1,(radialUtils.config.levels+1)).reverse())
 		.enter().append("text")
 		.attr("class", "axisLabel")
 		.attr("x", 4)
-		.attr("y", function(d){return -d*CONFIG_PROPERTIES.radius/CONFIG_PROPERTIES.levels;})
+		.attr("y", function(d){return -d*radialUtils.config.radius/radialUtils.config.levels;})
 		.attr("dy", "0.4em")
 		.style("font-size", "10px")
 		.attr("fill", "#737373")
-		.text(d => CONFIG_PROPERTIES.maxValue * d / CONFIG_PROPERTIES.levels);
+		.text(d => radialUtils.config.maxValue * d / radialUtils.config.levels);
 	
 	/////////////////////////////////////////////////////////
 	//////////////////// Draw the axes //////////////////////
@@ -131,8 +134,8 @@ function RadarChart(id, data, options) {
 	axis.append("line")
 		.attr("x1", 0)
 		.attr("y1", 0)
-		.attr("x2", radialUtils.xLocationFn(CONFIG_PROPERTIES.maxValue, true))
-		.attr("y2", radialUtils.yLocationFn(CONFIG_PROPERTIES.maxValue, true))
+		.attr("x2", radialUtils.xLocationFn(radialUtils.config.maxValue, true))
+		.attr("y2", radialUtils.yLocationFn(radialUtils.config.maxValue, true))
 		.attr("class", "line")
 		.style("stroke", "white")
 		.style("stroke-width", "2px");
@@ -143,10 +146,10 @@ function RadarChart(id, data, options) {
 		.style("font-size", "11px")
 		.attr("text-anchor", "middle")
 		.attr("dy", "0.35em")
-		.attr("x", radialUtils.xLocationFn(CONFIG_PROPERTIES.maxValue * CONFIG_PROPERTIES.labelFactor, true))
-		.attr("y", radialUtils.yLocationFn(CONFIG_PROPERTIES.maxValue * CONFIG_PROPERTIES.labelFactor, true))
+		.attr("x", radialUtils.xLocationFn(radialUtils.config.maxValue * radialUtils.config.labelFactor, true))
+		.attr("y", radialUtils.yLocationFn(radialUtils.config.maxValue * radialUtils.config.labelFactor, true))
 		.text(function(d){return d})
-		.call(utils.wrap, CONFIG_PROPERTIES.wrapWidth);
+		.call(utils.wrap, radialUtils.config.wrapWidth);
 	
 	/////////////////////////////////////////////////////////
 	///////////// Draw the radar chart blobs ////////////////
@@ -163,8 +166,8 @@ function RadarChart(id, data, options) {
 		.append("path")
 		.attr("class", "radarArea")
 		.attr("d", radialUtils.radialPathGeneratorSansRadius().radius(radialUtils.getRadius))
-		.style("fill", function(d,i) { return CONFIG_PROPERTIES.color(i); })
-		.style("fill-opacity", CONFIG_PROPERTIES.opacityArea)
+		.style("fill", function(d,i) { return radialUtils.config.color(i); })
+		.style("fill-opacity", radialUtils.config.opacityArea)
 		.on('mouseover', function (d,i){
 			//Dim all blobs
 			d3.selectAll(".radarArea")
@@ -179,15 +182,15 @@ function RadarChart(id, data, options) {
 			//Bring back all blobs
 			d3.selectAll(".radarArea")
 				.transition().duration(200)
-				.style("fill-opacity", CONFIG_PROPERTIES.opacityArea);
+				.style("fill-opacity", radialUtils.config.opacityArea);
 		});
 	
 	//Create the outlines
 	blobWrapper.append("path")
 		.attr("class", "radarStroke")
 		.attr("d", radialUtils.radialPathGeneratorSansRadius().radius(radialUtils.getRadius))
-		.style("stroke-width", CONFIG_PROPERTIES.strokeWidth + "px")
-		.style("stroke", function(d,i) { return CONFIG_PROPERTIES.color(i); })
+		.style("stroke-width", radialUtils.config.strokeWidth + "px")
+		.style("stroke", function(d,i) { return radialUtils.config.color(i); })
 		.style("fill", "none")
 		.style("filter" , "url(#glow)");
 	
@@ -196,10 +199,10 @@ function RadarChart(id, data, options) {
 		.data(function(d,i) { return d; })
 		.enter().append("circle")
 		.attr("class", "radarCircle")
-		.attr("r", CONFIG_PROPERTIES.dotRadius)
+		.attr("r", radialUtils.config.dotRadius)
 		.attr("cx", radialUtils.xLocationFn())
 		.attr("cy", radialUtils.yLocationFn())
-		.style("fill", function(d,i,j) { return CONFIG_PROPERTIES.color(j); })
+		.style("fill", function(d,i,j) { return radialUtils.config.color(j); })
 		.style("fill-opacity", 0.8);
 	
 	/////////////////////////////////////////////////////////
@@ -217,9 +220,9 @@ function RadarChart(id, data, options) {
 		.data(function(d,i) { return d; })
 		.enter().append("circle")
 		.attr("class", "radarBlobVertexCircle")
-		.attr("r", CONFIG_PROPERTIES.dotRadius*1.5)
-		.attr("cx", radialUtils.xLocationFn(CONFIG_PROPERTIES.maxValue))
-		.attr("cy", radialUtils.yLocationFn(CONFIG_PROPERTIES.maxValue))
+		.attr("r", radialUtils.config.dotRadius*1.5)
+		.attr("cx", radialUtils.xLocationFn(radialUtils.config.maxValue))
+		.attr("cy", radialUtils.yLocationFn(radialUtils.config.maxValue))
 		.style("fill", "none")
 		.style("pointer-events", "all")
 		.on("mouseover", function(d,i) {
