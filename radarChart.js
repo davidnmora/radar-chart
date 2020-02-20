@@ -26,21 +26,23 @@ function RadarChart(id, data, options) {
 	
 	CONFIG_PROPERTIES = {
 		...CONFIG_PROPERTIES,
-		...options
+		...options,
 	}
 	
+	CONFIG_PROPERTIES = {
+		...CONFIG_PROPERTIES,
+		radius: Math.min(CONFIG_PROPERTIES.w/2, CONFIG_PROPERTIES.h/2), 	//Radius of the outermost circle
+	}
 	//If the supplied maxValue is smaller than the actual one, replace by the max in the data
 	var maxValue = Math.max(CONFIG_PROPERTIES.maxValue, d3.max(data, function(i){return d3.max(i.map(function(o){return o.value;}))}));
 	
-	var allAxis = (data[0].map(function(i, j){return i.axis})),	//Names of each axis
-		total = allAxis.length,					//The number of different axes
-		radius = Math.min(CONFIG_PROPERTIES.w/2, CONFIG_PROPERTIES.h/2), 	//Radius of the outermost circle
+	var	total = data[0].length,					//The number of different axes
 		Format = d3.format('%'),			 	//Percentage formatting
 		angleSlice = Math.PI * 2 / total;		//The width in radians of each "slice"
 	
 	//Scale for the radius
 	var rScale = d3.scaleLinear()
-		.range([0, radius])
+		.range([0, CONFIG_PROPERTIES.radius])
 		.domain([0, maxValue]);
 	
 	// TODO: this should be a class which takes in seed values
@@ -96,7 +98,7 @@ function RadarChart(id, data, options) {
 		.enter()
 		.append("circle")
 		.attr("class", "gridCircle")
-		.attr("r", function(d, i){return radius/CONFIG_PROPERTIES.levels*d;})
+		.attr("r", function(d, i){return CONFIG_PROPERTIES.radius/CONFIG_PROPERTIES.levels*d;})
 		.style("fill", "#CDCDCD")
 		.style("stroke", "none") // #CDCDCD
 		.style("fill-opacity", CONFIG_PROPERTIES.opacityCircles)
@@ -108,7 +110,7 @@ function RadarChart(id, data, options) {
 		.enter().append("text")
 		.attr("class", "axisLabel")
 		.attr("x", 4)
-		.attr("y", function(d){return -d*radius/CONFIG_PROPERTIES.levels;})
+		.attr("y", function(d){return -d*CONFIG_PROPERTIES.radius/CONFIG_PROPERTIES.levels;})
 		.attr("dy", "0.4em")
 		.style("font-size", "10px")
 		.attr("fill", "#737373")
@@ -120,7 +122,7 @@ function RadarChart(id, data, options) {
 	
 	//Create the straight lines radiating outward from the center
 	var axis = axisGrid.selectAll(".axis")
-		.data(allAxis)
+		.data(data[0].map(d => d.axis))
 		.enter()
 		.append("g")
 		.attr("class", "axis");
@@ -128,8 +130,8 @@ function RadarChart(id, data, options) {
 	axis.append("line")
 		.attr("x1", 0)
 		.attr("y1", 0)
-		.attr("x2", radialUtils.xLocationFn(maxValue))
-		.attr("y2", radialUtils.yLocationFn(maxValue))
+		.attr("x2", radialUtils.xLocationFn(maxValue, true))
+		.attr("y2", radialUtils.yLocationFn(maxValue, true))
 		.attr("class", "line")
 		.style("stroke", "white")
 		.style("stroke-width", "2px");
