@@ -43,6 +43,19 @@ function RadarChart(id, data, options) {
 		.range([0, radius])
 		.domain([0, maxValue]);
 	
+	// TODO: this should be a class which takes in seed values
+	const radialUtils = {
+		getRadius: d => rScale(d.value),
+		xLocationFn: (scaleFactor = 1, dIgnored = false) => (d, i) => rScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.cos(angleSlice * i - Math.PI/2),
+		yLocationFn: (scaleFactor = 1, dIgnored = false) => (d, i) => rScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.sin(angleSlice * i - Math.PI/2),
+		radialPathGeneratorSansRadius: () => {
+			return d3.lineRadial()
+				.curve(d3.curveMonotoneX)
+				.angle((d,i) => i * angleSlice)
+			// just add .radius()!
+		}
+	}
+	
 	/////////////////////////////////////////////////////////
 	//////////// Create the container SVG and g /////////////
 	/////////////////////////////////////////////////////////
@@ -115,8 +128,8 @@ function RadarChart(id, data, options) {
 	axis.append("line")
 		.attr("x1", 0)
 		.attr("y1", 0)
-		.attr("x2", function(d, i){ return rScale(maxValue*1.1) * Math.cos(angleSlice*i - Math.PI/2); })
-		.attr("y2", function(d, i){ return rScale(maxValue*1.1) * Math.sin(angleSlice*i - Math.PI/2); })
+		.attr("x2", radialUtils.xLocationFn(maxValue))
+		.attr("y2", radialUtils.yLocationFn(maxValue))
 		.attr("class", "line")
 		.style("stroke", "white")
 		.style("stroke-width", "2px");
@@ -127,8 +140,8 @@ function RadarChart(id, data, options) {
 		.style("font-size", "11px")
 		.attr("text-anchor", "middle")
 		.attr("dy", "0.35em")
-		.attr("x", function(d, i){ return rScale(maxValue * cfg.labelFactor) * Math.cos(angleSlice*i - Math.PI/2); })
-		.attr("y", function(d, i){ return rScale(maxValue * cfg.labelFactor) * Math.sin(angleSlice*i - Math.PI/2); })
+		.attr("x", radialUtils.xLocationFn(maxValue * cfg.labelFactor, true))
+		.attr("y", radialUtils.yLocationFn(maxValue * cfg.labelFactor, true))
 		.text(function(d){return d})
 		.call(utils.wrap, cfg.wrapWidth);
 	
@@ -136,17 +149,6 @@ function RadarChart(id, data, options) {
 	///////////// Draw the radar chart blobs ////////////////
 	/////////////////////////////////////////////////////////
 	
-	const radialUtils = {
-		getRadius: d => rScale(d.value),
-		getPointXLocation: (d, i) => rScale(d.value) *  Math.cos(angleSlice * i - Math.PI/2),
-		getPointYLocation: (d, i) => rScale(d.value) *  Math.sin(angleSlice * i - Math.PI/2),
-		radialPathGeneratorSansRadius: () => {
-			return d3.lineRadial()
-				.curve(d3.curveMonotoneX)
-				.angle((d,i) => i * angleSlice)
-			// just add .radius()!
-		}
-	}
 	//The radial line function
 	const radarLinePreDataDefinedRadius = radialUtils.radialPathGeneratorSansRadius().radius(10)
 	
@@ -208,8 +210,8 @@ function RadarChart(id, data, options) {
 		.enter().append("circle")
 		.attr("class", "radarCircle")
 		.attr("r", cfg.dotRadius)
-		.attr("cx", radialUtils.getPointXLocation)
-		.attr("cy", radialUtils.getPointYLocation)
+		.attr("cx", radialUtils.xLocationFn())
+		.attr("cy", radialUtils.yLocationFn())
 		.style("fill", function(d,i,j) { return cfg.color(j); })
 		.style("fill-opacity", 0.8);
 	
@@ -229,8 +231,8 @@ function RadarChart(id, data, options) {
 		.enter().append("circle")
 		.attr("class", "radarBlobVertexCircle")
 		.attr("r", cfg.dotRadius*1.5)
-		.attr("cx", radialUtils.getPointXLocation)
-		.attr("cy", radialUtils.getPointYLocation)
+		.attr("cx", radialUtils.xLocationFn)
+		.attr("cy", radialUtils.yLocationFn)
 		.style("fill", "none")
 		.style("pointer-events", "all")
 		.on("mouseover", function(d,i) {
