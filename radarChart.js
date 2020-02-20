@@ -19,7 +19,7 @@ function RadarChart(id, data, options) {
 		opacityCircles: 0.1, 	//The opacity of the circles of each blob
 		strokeWidth: 2, 		//The width of the stroke around each blob
 		roundStrokes: false,	//If true the area and stroke will follow a round path (cardinal-closed)
-		color: d3.scale.category10()	//Color function
+		// color: REQUIRED	//Color function
 	};
 	
 	//Put all of the options into a variable called cfg
@@ -39,7 +39,7 @@ function RadarChart(id, data, options) {
 		angleSlice = Math.PI * 2 / total;		//The width in radians of each "slice"
 	
 	//Scale for the radius
-	var rScale = d3.scale.linear()
+	var rScale = d3.scaleLinear()
 		.range([0, radius])
 		.domain([0, maxValue]);
 	
@@ -142,14 +142,14 @@ function RadarChart(id, data, options) {
 		getRadius: d => rScale(d.value),
 		getPointXLocation: (d, i) => rScale(d.value) *  Math.cos(angleSlice * i - Math.PI/2),
 		radialPathGeneratorSansRadius: () => {
-			return d3.svg.line.radial()
-				.interpolate("linear-closed")
+			return d3.lineRadial()
+				.curve(d3.curveBasisClosed)
 				.angle((d,i) => i * angleSlice)
 			// just add .radius()!
 		}
 	}
 	//The radial line function
-	const radarLinePreDataDefinedRadius = radialUtils.radialPathGeneratorSansRadius().radius(100)
+	const radarLinePreDataDefinedRadius = radialUtils.radialPathGeneratorSansRadius().radius(10)
 	
 	setTimeout(() => {
 		const newLine = radialUtils.radialPathGeneratorSansRadius().radius(radialUtils.getRadius)
@@ -161,7 +161,7 @@ function RadarChart(id, data, options) {
 	}, 400)
 	
 	// if(cfg.roundStrokes) {
-	// 	radarLinePreDataDefinedRadius.interpolate("cardinal-closed");
+	// 	radarLinePreDataDefinedRadius.curve(d3.curveCardinalClosed)
 	// }
 	
 	//Create a wrapper for the blobs

@@ -1483,7 +1483,7 @@ const coriData = {
 	],
 }
 
-const linear = d3.scale.linear().range([0, 1])
+const linear = d3.scaleLinear().range([0, 1])
 
 const attrDataForVTFormattedForViz = coriData.attrData.reduce((_total, regionRow) => {
 	const scaledRegionRow = Object.keys(regionRow)
