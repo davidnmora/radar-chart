@@ -85,7 +85,7 @@ function RadarChart(id, data, options) {
 		.attr("class", "gridCircle")
 		.attr("r", function(d, i){return radius/cfg.levels*d;})
 		.style("fill", "#CDCDCD")
-		.style("stroke", "#CDCDCD")
+		.style("stroke", "none") // #CDCDCD
 		.style("fill-opacity", cfg.opacityCircles)
 		.style("filter" , "url(#glow)");
 	
@@ -136,14 +136,13 @@ function RadarChart(id, data, options) {
 	///////////// Draw the radar chart blobs ////////////////
 	/////////////////////////////////////////////////////////
 	
-	const DEMO_SELECTED_COMMUNITY = data[0][0]
-	
 	const radialUtils = {
 		getRadius: d => rScale(d.value),
 		getPointXLocation: (d, i) => rScale(d.value) *  Math.cos(angleSlice * i - Math.PI/2),
+		getPointYLocation: (d, i) => rScale(d.value) *  Math.sin(angleSlice * i - Math.PI/2),
 		radialPathGeneratorSansRadius: () => {
 			return d3.lineRadial()
-				.curve(d3.curveBasisClosed)
+				.curve(d3.curveMonotoneX)
 				.angle((d,i) => i * angleSlice)
 			// just add .radius()!
 		}
@@ -210,7 +209,7 @@ function RadarChart(id, data, options) {
 		.attr("class", "radarCircle")
 		.attr("r", cfg.dotRadius)
 		.attr("cx", radialUtils.getPointXLocation)
-		.attr("cy", function(d,i){ return rScale(d.value) * Math.sin(angleSlice*i - Math.PI/2); })
+		.attr("cy", radialUtils.getPointYLocation)
 		.style("fill", function(d,i,j) { return cfg.color(j); })
 		.style("fill-opacity", 0.8);
 	
@@ -230,8 +229,8 @@ function RadarChart(id, data, options) {
 		.enter().append("circle")
 		.attr("class", "radarBlobVertexCircle")
 		.attr("r", cfg.dotRadius*1.5)
-		.attr("cx", function(d,i){ return rScale(d.value) * Math.cos(angleSlice*i - Math.PI/2); })
-		.attr("cy", function(d,i){ return rScale(d.value) * Math.sin(angleSlice*i - Math.PI/2); })
+		.attr("cx", radialUtils.getPointXLocation)
+		.attr("cy", radialUtils.getPointYLocation)
 		.style("fill", "none")
 		.style("pointer-events", "all")
 		.on("mouseover", function(d,i) {
