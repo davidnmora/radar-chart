@@ -22,6 +22,22 @@ let CONFIG_PROPERTIES = {
 	// color: REQUIRED	//Color function
 };
 
+function RadialUtilsManager(CONFIG_PROPERTIES) {
+	const _radiusScale = d3.scaleLinear()
+		.range([0, CONFIG_PROPERTIES.radius])
+		.domain([0, CONFIG_PROPERTIES.maxValue]);
+	
+	this.getRadius = d => _radiusScale(d.value),
+		this.xLocationFn = (scaleFactor = 1, dIgnored = false) => (d, i) => _radiusScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.cos(CONFIG_PROPERTIES.angleSlice * i - Math.PI/2),
+		this.yLocationFn = (scaleFactor = 1, dIgnored = false) => (d, i) => _radiusScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.sin(CONFIG_PROPERTIES.angleSlice * i - Math.PI/2),
+		this.radialPathGeneratorSansRadius = () => {
+			return d3.lineRadial()
+				.curve(d3.curveMonotoneX)
+				.angle((d,i) => i * CONFIG_PROPERTIES.angleSlice)
+			// just add .radius()!
+		}
+}
+
 function RadarChart(id, data, options) {
 	
 	CONFIG_PROPERTIES = {
@@ -41,24 +57,7 @@ function RadarChart(id, data, options) {
 		), //If the supplied maxValue is smaller than the actual one, replace by the max in the data
 	}
 	
-	
-	//Scale for the radius
-	var rScale = d3.scaleLinear()
-		.range([0, CONFIG_PROPERTIES.radius])
-		.domain([0, CONFIG_PROPERTIES.maxValue]);
-	
-	// TODO: this should be a class which takes in seed values
-	const radialUtils = {
-		getRadius: d => rScale(d.value),
-		xLocationFn: (scaleFactor = 1, dIgnored = false) => (d, i) => rScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.cos(CONFIG_PROPERTIES.angleSlice * i - Math.PI/2),
-		yLocationFn: (scaleFactor = 1, dIgnored = false) => (d, i) => rScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.sin(CONFIG_PROPERTIES.angleSlice * i - Math.PI/2),
-		radialPathGeneratorSansRadius: () => {
-			return d3.lineRadial()
-				.curve(d3.curveMonotoneX)
-				.angle((d,i) => i * CONFIG_PROPERTIES.angleSlice)
-			// just add .radius()!
-		}
-	}
+	const radialUtils = new RadialUtilsManager(CONFIG_PROPERTIES)
 	
 	/////////////////////////////////////////////////////////
 	//////////// Create the container SVG and g /////////////
