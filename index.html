@@ -37,7 +37,6 @@
 
 <div class="radarChart"></div>
 
-<script src="utils.js"></script>
 <script src="vt-oz-tract-data.js"></script>
 <script src="RadialUtilsManager.js"></script>
 <script src="radarChart.js"></script>
@@ -57,7 +56,7 @@
 	////////////////////////// Data //////////////////////////////
 	//////////////////////////////////////////////////////////////
 
-	var data = [
+	var _sampleData = [
 		[//iPhone
 			{axis:"Battery Life",value:0.22},
 			{axis:"Brand",value:0.28},
@@ -104,7 +103,13 @@
 		color: color
 	};
 	//Call function to draw the Radar chart
-	RadarChart(".radarChart", attrDataForVTFormattedForViz.slice(0,3), radarChartOptions);
+	const theRadarChart = new RadarChart({
+	  id: ".radarChart",
+	  data: attrDataForVTFormattedForViz.slice(0,3),
+	  options: radarChartOptions,
+	})
+
+	theRadarChart.render()
 </script>
 </body>
 </html>
