@@ -32,27 +32,30 @@ function RadarChart(id, data, options) {
 	CONFIG_PROPERTIES = {
 		...CONFIG_PROPERTIES,
 		radius: Math.min(CONFIG_PROPERTIES.w/2, CONFIG_PROPERTIES.h/2), 	//Radius of the outermost circle
+		angleSlice: Math.PI * 2 / data[0].length,		//The width in radians of each "slice"
+		maxValue: Math.max(
+			CONFIG_PROPERTIES.maxValue,
+			d3.max(
+				data, i => d3.max(i.map(o => o.value))
+			)
+		), //If the supplied maxValue is smaller than the actual one, replace by the max in the data
 	}
-	//If the supplied maxValue is smaller than the actual one, replace by the max in the data
-	var maxValue = Math.max(CONFIG_PROPERTIES.maxValue, d3.max(data, function(i){return d3.max(i.map(function(o){return o.value;}))}));
 	
-	var	total = data[0].length,					//The number of different axes
-		angleSlice = Math.PI * 2 / total;		//The width in radians of each "slice"
 	
 	//Scale for the radius
 	var rScale = d3.scaleLinear()
 		.range([0, CONFIG_PROPERTIES.radius])
-		.domain([0, maxValue]);
+		.domain([0, CONFIG_PROPERTIES.maxValue]);
 	
 	// TODO: this should be a class which takes in seed values
 	const radialUtils = {
 		getRadius: d => rScale(d.value),
-		xLocationFn: (scaleFactor = 1, dIgnored = false) => (d, i) => rScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.cos(angleSlice * i - Math.PI/2),
-		yLocationFn: (scaleFactor = 1, dIgnored = false) => (d, i) => rScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.sin(angleSlice * i - Math.PI/2),
+		xLocationFn: (scaleFactor = 1, dIgnored = false) => (d, i) => rScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.cos(CONFIG_PROPERTIES.angleSlice * i - Math.PI/2),
+		yLocationFn: (scaleFactor = 1, dIgnored = false) => (d, i) => rScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.sin(CONFIG_PROPERTIES.angleSlice * i - Math.PI/2),
 		radialPathGeneratorSansRadius: () => {
 			return d3.lineRadial()
 				.curve(d3.curveMonotoneX)
-				.angle((d,i) => i * angleSlice)
+				.angle((d,i) => i * CONFIG_PROPERTIES.angleSlice)
 			// just add .radius()!
 		}
 	}
@@ -113,7 +116,7 @@ function RadarChart(id, data, options) {
 		.attr("dy", "0.4em")
 		.style("font-size", "10px")
 		.attr("fill", "#737373")
-		.text(d => maxValue * d / CONFIG_PROPERTIES.levels);
+		.text(d => CONFIG_PROPERTIES.maxValue * d / CONFIG_PROPERTIES.levels);
 	
 	/////////////////////////////////////////////////////////
 	//////////////////// Draw the axes //////////////////////
@@ -129,8 +132,8 @@ function RadarChart(id, data, options) {
 	axis.append("line")
 		.attr("x1", 0)
 		.attr("y1", 0)
-		.attr("x2", radialUtils.xLocationFn(maxValue, true))
-		.attr("y2", radialUtils.yLocationFn(maxValue, true))
+		.attr("x2", radialUtils.xLocationFn(CONFIG_PROPERTIES.maxValue, true))
+		.attr("y2", radialUtils.yLocationFn(CONFIG_PROPERTIES.maxValue, true))
 		.attr("class", "line")
 		.style("stroke", "white")
 		.style("stroke-width", "2px");
@@ -141,8 +144,8 @@ function RadarChart(id, data, options) {
 		.style("font-size", "11px")
 		.attr("text-anchor", "middle")
 		.attr("dy", "0.35em")
-		.attr("x", radialUtils.xLocationFn(maxValue * CONFIG_PROPERTIES.labelFactor, true))
-		.attr("y", radialUtils.yLocationFn(maxValue * CONFIG_PROPERTIES.labelFactor, true))
+		.attr("x", radialUtils.xLocationFn(CONFIG_PROPERTIES.maxValue * CONFIG_PROPERTIES.labelFactor, true))
+		.attr("y", radialUtils.yLocationFn(CONFIG_PROPERTIES.maxValue * CONFIG_PROPERTIES.labelFactor, true))
 		.text(function(d){return d})
 		.call(utils.wrap, CONFIG_PROPERTIES.wrapWidth);
 	
@@ -157,7 +160,7 @@ function RadarChart(id, data, options) {
 		const newLine = radialUtils.radialPathGeneratorSansRadius().radius(radialUtils.getRadius)
 
 		d3.selectAll('.radarArea, .radarStroke')
-			.transition().duration(2000)
+			.transition().duration(100)
 			.attr("d", d => newLine(d))
 
 	}, 400)
