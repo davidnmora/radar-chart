@@ -1,8 +1,9 @@
 /////////////////////////////////////////////////////////
 /////////////// The Radar Chart Function ////////////////
-/////////////// Written by Nadieh Bremer ////////////////
-////////////////// VisualCinnamon.com ///////////////////
-/////////// Inspired by the code of alangrafu ///////////
+/////////////// Written by David Mora ////////////////
+////////////////// davidmora.us ///////////////////
+/////////// Inspired by the code of Nadieh Bremer ///////////
+//// .... who was inspired by the code of alangrafu /////////
 /////////////////////////////////////////////////////////
 
 const DEFAULT__CONFIG_PROPERTIES = {
@@ -20,6 +21,7 @@ const DEFAULT__CONFIG_PROPERTIES = {
 	roundStrokes: false,	//If true the area and stroke will follow a round path (cardinal-closed)
 	// color: REQUIRED	//Color function
 };
+
 
 class RadialUtilsManager {
 	
@@ -42,10 +44,10 @@ class RadialUtilsManager {
 			.range([0, this._CONFIG_PROPERTIES.radius])
 			.domain([0, this._CONFIG_PROPERTIES.maxValue]);
 		
-		this.getRadius = d => _radiusScale(d.value),
-			this.xLocationFn = (scaleFactor = 1, dIgnored = false) => (d, i) => _radiusScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.cos(this._CONFIG_PROPERTIES.angleSlice * i - Math.PI/2),
-			this.yLocationFn = (scaleFactor = 1, dIgnored = false) => (d, i) => _radiusScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.sin(this._CONFIG_PROPERTIES.angleSlice * i - Math.PI/2),
-			this.radialPathGeneratorSansRadius = () => {
+		this.getRadius = d => _radiusScale(d.value)
+		this.xLocationFn = (scaleFactor = 1, dIgnored = false) => (d, i) => _radiusScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.cos(this._CONFIG_PROPERTIES.angleSlice * i - Math.PI/2)
+		this.yLocationFn = (scaleFactor = 1, dIgnored = false) => (d, i) => _radiusScale(scaleFactor * (dIgnored ? 1 : d.value)) *  Math.sin(this._CONFIG_PROPERTIES.angleSlice * i - Math.PI/2)
+		this.radialPathGeneratorSansRadius = () => {
 				return d3.lineRadial()
 					.curve(d3.curveMonotoneX)
 					.angle((d,i) => i * this._CONFIG_PROPERTIES.angleSlice)
@@ -57,6 +59,7 @@ class RadialUtilsManager {
 		return this._CONFIG_PROPERTIES
 	}
 }
+
 
 function RadarChart(id, data, options) {
 	
@@ -91,7 +94,7 @@ function RadarChart(id, data, options) {
 		.enter()
 		.append("circle")
 		.attr("class", "gridCircle")
-		.attr("r", function(d, i){return radialUtils.config.radius/radialUtils.config.levels*d;})
+		.attr("r", d => radialUtils.config.radius / radialUtils.config.levels * d)
 		.style("fill", "#CDCDCD")
 		.style("stroke", "none") // #CDCDCD
 		.style("fill-opacity", radialUtils.config.opacityCircles)
@@ -102,7 +105,7 @@ function RadarChart(id, data, options) {
 		.enter().append("text")
 		.attr("class", "axisLabel")
 		.attr("x", 4)
-		.attr("y", function(d){return -d*radialUtils.config.radius/radialUtils.config.levels;})
+		.attr("y", d => -d * radialUtils.config.radius / radialUtils.config.levels)
 		.attr("dy", "0.4em")
 		.style("font-size", "10px")
 		.attr("fill", "#737373")
@@ -136,7 +139,7 @@ function RadarChart(id, data, options) {
 		.attr("dy", "0.35em")
 		.attr("x", radialUtils.xLocationFn(radialUtils.config.maxValue * radialUtils.config.labelFactor, true))
 		.attr("y", radialUtils.yLocationFn(radialUtils.config.maxValue * radialUtils.config.labelFactor, true))
-		.text(function(d){return d})
+		.text(d => d)
 		.call(utils.wrap, radialUtils.config.wrapWidth);
 	
 	/////////////////////////////////////////////////////////
@@ -154,9 +157,9 @@ function RadarChart(id, data, options) {
 		.append("path")
 		.attr("class", "radarArea")
 		.attr("d", radialUtils.radialPathGeneratorSansRadius().radius(radialUtils.getRadius))
-		.style("fill", function(d,i) { return radialUtils.config.color(i); })
+		.style("fill",(d, i) => radialUtils.config.color(i))
 		.style("fill-opacity", radialUtils.config.opacityArea)
-		.on('mouseover', function (d,i){
+		.on('mouseover', function() {
 			//Dim all blobs
 			d3.selectAll(".radarArea")
 				.transition().duration(200)
@@ -166,7 +169,7 @@ function RadarChart(id, data, options) {
 				.transition().duration(200)
 				.style("fill-opacity", 0.7);
 		})
-		.on('mouseout', function(){
+		.on('mouseout', () => {
 			//Bring back all blobs
 			d3.selectAll(".radarArea")
 				.transition().duration(200)
@@ -178,18 +181,18 @@ function RadarChart(id, data, options) {
 		.attr("class", "radarStroke")
 		.attr("d", radialUtils.radialPathGeneratorSansRadius().radius(radialUtils.getRadius))
 		.style("stroke-width", radialUtils.config.strokeWidth + "px")
-		.style("stroke", function(d,i) { return radialUtils.config.color(i); })
+		.style("stroke", (d,i) => radialUtils.config.color(i))
 		.style("fill", "none")
 	
 	//Append the circles
 	blobWrapper.selectAll(".radarCircle")
-		.data(function(d,i) { return d; })
+		.data(d => d)
 		.enter().append("circle")
 		.attr("class", "radarCircle")
 		.attr("r", radialUtils.config.dotRadius)
 		.attr("cx", radialUtils.xLocationFn())
 		.attr("cy", radialUtils.yLocationFn())
-		.style("fill", function(d,i,j) { return radialUtils.config.color(j); })
+		.style("fill", (d,i,j) => radialUtils.config.color(j))
 		.style("fill-opacity", 0.8);
 	
 	/////////////////////////////////////////////////////////
@@ -204,7 +207,7 @@ function RadarChart(id, data, options) {
 	
 	//Append a set of circles on top for the mouseover pop-up
 	blobCircleWrapper.selectAll(".radarBlobVertexCircle")
-		.data(function(d,i) { return d; })
+		.data(d => d)
 		.enter().append("circle")
 		.attr("class", "radarBlobVertexCircle")
 		.attr("r", radialUtils.config.dotRadius*1.5)
@@ -212,7 +215,7 @@ function RadarChart(id, data, options) {
 		.attr("cy", radialUtils.yLocationFn(radialUtils.config.maxValue))
 		.style("fill", "none")
 		.style("pointer-events", "all")
-		.on("mouseover", function(d,i) {
+		.on("mouseover", function(d) {
 			newX =  parseFloat(d3.select(this).attr('cx')) - 10;
 			newY =  parseFloat(d3.select(this).attr('cy')) - 10;
 			
@@ -223,7 +226,7 @@ function RadarChart(id, data, options) {
 				.transition().duration(200)
 				.style('opacity', 1);
 		})
-		.on("mouseout", function(){
+		.on("mouseout", () => {
 			tooltip.transition().duration(200)
 				.style("opacity", 0);
 		});
